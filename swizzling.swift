@@ -1,38 +1,28 @@
 
+/*
+ Swizzling, нужен для того, чтобы по какой-то причине заменить в рантайме внутренние реализации методов.
+ В параметры метода заносятся оригигинальный метод, метод на который он должен быть заменен, класс оригинального метода а так же класс метода где лежит подменный метод.
+ 
+ Created by Антон Прокопьев on  20.12.2022.
+ */
+
 import Foundation
-import UIKit
 import ObjectiveC
 
-class TestSwizzling: NSObject {
-	@objc dynamic func originalMhetod() {
-		print("I am original mhetod")
-	}
+open class Swizzling: NSObject {
+    
+    ///Пример как заполнять параметры - originalSelector: #selector(swz.originalMhetod), swizzlingClass: Swz.self.
+    /// Mетоды должны быть помечены @objc dynamic func
+    public func swizzle(originalSelector: Selector, swizzlingSelector: Selector, originalClass: AnyClass, swizzlingClass: AnyClass) {
+        let originalSelector = originalSelector
+        let swizzlingSelector = swizzlingSelector
+        
+        let originalMhetod = class_getInstanceMethod(originalClass, originalSelector)
+        let swizlingMhetod = class_getInstanceMethod(swizzlingClass, swizzlingSelector)
+        
+        guard let original = originalMhetod,
+              let swz = swizlingMhetod else { return }
+        
+        method_exchangeImplementations(original, swz)
+    }
 }
-
-extension TestSwizzling {
-	@objc dynamic func swizzledMhetod() {
-		print("I am swizzled mhetod")
-	}
-	
-	func swizzle() {
-		let originalSelector = #selector(TestSwizzling.originalMhetod)
-		let swizlingSelector = #selector(TestSwizzling.swizzledMhetod)
-		
-		let originalMhetod = class_getInstanceMethod(TestSwizzling.self, originalSelector)
-		let swizlingMhetod = class_getInstanceMethod(TestSwizzling.self, swizlingSelector)
-		
-		method_exchangeImplementations(originalMhetod!, swizlingMhetod!)
-		print("Swizzled Done!")
-		
-	}
-}
-
-var test = TestSwizzling()
-
-test.originalMhetod()
-test.swizzledMhetod()
-
-test.swizzle()
-
-test.originalMhetod()
-test.swizzledMhetod()
